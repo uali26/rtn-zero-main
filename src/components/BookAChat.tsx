@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { MessageCircle, Send } from "lucide-react";
+import { MessageCircle, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 const countries = [
   "United Kingdom",
@@ -59,14 +61,52 @@ export default function BookAChat() {
   const [smartMeter, setSmartMeter] = useState<string>("");
   const [country, setCountry] = useState<string>("");
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSelect = (setter: (v: string) => void) => (value: string | null) => {
     setter(value ?? "");
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError(null);
+    setIsSubmitting(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const payload = {
+      businessName: formData.get("businessName") as string,
+      email: formData.get("email") as string,
+      phone: (formData.get("phone") as string) || undefined,
+      addressLine1: formData.get("address1") as string,
+      addressLine2: (formData.get("address2") as string) || undefined,
+      city: formData.get("city") as string,
+      postcode: formData.get("postcode") as string,
+      country,
+      posVendor: usesPOS === "yes" ? eposSystem || undefined : undefined,
+      smartMeter: smartMeter === "yes" ? true : smartMeter === "no" ? false : undefined,
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/api/v1/leads`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || `Request failed (${res.status})`);
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -312,13 +352,26 @@ export default function BookAChat() {
                   </div>
 
                   {/* Submit */}
+                  {error && (
+                    <p className="text-sm text-destructive text-center">{error}</p>
+                  )}
                   <Button
                     type="submit"
                     size="lg"
+                    disabled={isSubmitting}
                     className="w-full gap-2 bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90"
                   >
-                    <Send className="h-4 w-4" />
-                    Book Your Free Consultation
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Book Your Free Consultation
+                      </>
+                    )}
                   </Button>
                 </form>
               )}
