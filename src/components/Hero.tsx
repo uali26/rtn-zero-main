@@ -57,12 +57,12 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-8 flex flex-col gap-3 sm:flex-row"
           >
-            <Button size="lg" className="gap-2 shadow-lg shadow-primary/25">
-              Get Started Free
+            <Button size="lg" className="gap-2 shadow-lg shadow-primary/25" onClick={() => { window.location.hash = '#book-a-chat'; }}>
+              Book a Chat
               <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button size="lg" variant="outline" className="gap-2" onClick={() => { window.location.hash = '#ecosystem'; }}>
-                Explore the Ecosystem
+            <Button size="lg" variant="outline" className="gap-2" onClick={() => { window.location.hash = '#how-it-works'; }}>
+                Watch Demo
                 <ChevronDown className="h-4 w-4" />
             </Button>
           </motion.div>

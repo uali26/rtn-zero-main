@@ -8,11 +8,11 @@ import ThemeToggle from "./ThemeToggle";
 
 const navLinks = [
   { label: "Ecosystem", href: "#ecosystem" },
-  { label: "Features", href: "#features" },
   { label: "Intelligence", href: "#intelligence" },
   { label: "Industry Hub", href: "#industry-hub" },
   { label: "Roadmap", href: "#roadmap" },
   { label: "Dashboard", href: "#dashboard" },
+  { label: "Book a Chat", href: "#book-a-chat" },
 ];
 
 export default function Navbar() {
@@ -47,8 +47,8 @@ export default function Navbar() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button className="hidden md:inline-flex" size="sm">
-            Get Started Free
+          <Button className="hidden md:inline-flex" size="sm" onClick={() => { window.location.hash = '#book-a-chat'; }}>
+            Book a Chat
           </Button>
           <Button
             variant="ghost"
@@ -82,8 +82,8 @@ export default function Navbar() {
                   {link.label}
                 </a>
               ))}
-              <Button className="mt-2 w-full" size="sm">
-                Get Started Free
+              <Button className="mt-2 w-full" size="sm" onClick={() => { window.location.hash = '#book-a-chat'; setOpen(false); }}>
+                Book a Chat
               </Button>
             </div>
           </motion.div>

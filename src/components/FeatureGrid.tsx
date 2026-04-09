@@ -146,7 +146,7 @@ export default function FeatureGrid() {
   const active = categories.find((c) => c.id === activeTab)!;
 
   return (
-    <section id="features" className="relative py-24 px-6">
+    <section id="ecosystem" className="relative py-24 px-6">
       <div className="mx-auto max-w-7xl">
         {/* Section header */}
         <motion.div
