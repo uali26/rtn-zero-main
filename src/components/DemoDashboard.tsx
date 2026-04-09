@@ -25,20 +25,38 @@ const initialData = {
 };
 
 function calcFootprint(data: typeof initialData) {
-  const foodEmissions = data.dailyCovers * data.avgSpend * 0.0012;
-  const energyEmissions = data.energyKwh * 0.233;
-  const waterEmissions = data.waterLiters * 0.000344;
-  const wasteEmissions = data.wasteKg * 0.58;
+  // Constants updated to match "W4_Factor List.csv"
+  const FACTORS = {
+    ELECTRICITY: 0.177,      // kgCO2e per kWh 
+    WATER_SUPPLY: 0.149,     // kgCO2e per m3 
+    WATER_TREATMENT: 0.272,  // kgCO2e per m3 
+    WASTE_LANDFILL: 0.467,   // kgCO2e per kg 
+    FOOD_SPEND_ADJUSTED: 0.0011, // Document suggests weight-based, but keep 0.0012 if spend is necessary
+  };
+
+  const revenue = data.dailyCovers * data.avgSpend;
+  const foodEmissions = revenue * FACTORS.FOOD_SPEND_ADJUSTED;
+  const energyEmissions = data.energyKwh * FACTORS.ELECTRICITY;
+  
+  // Convert liters to m3 for water calculation
+  const waterM3 = data.waterLiters / 1000;
+  const waterEmissions = waterM3 * (FACTORS.WATER_SUPPLY + FACTORS.WATER_TREATMENT);
+  
+  const wasteEmissions = data.wasteKg * FACTORS.WASTE_LANDFILL;
+  
   const total = foodEmissions + energyEmissions + waterEmissions + wasteEmissions;
+
   return {
     foodEmissions: +foodEmissions.toFixed(1),
     energyEmissions: +energyEmissions.toFixed(1),
     waterEmissions: +waterEmissions.toFixed(2),
     wasteEmissions: +wasteEmissions.toFixed(1),
     total: +total.toFixed(1),
-    intensity: +(total / data.dailyCovers).toFixed(3),
-    revenue: data.dailyCovers * data.avgSpend,
-    laborPct: +((data.staffOnShift * 12 * 8) / (data.dailyCovers * data.avgSpend) * 100).toFixed(1),
+    intensity: +(total / data.dailyCovers).toFixed(3), // Carbon per cover 
+    revenue,
+    laborPct: revenue > 0 
+      ? +((data.staffOnShift * 12 * 8) / revenue * 100).toFixed(1) 
+      : 0,
   };
 }
 
@@ -94,8 +112,8 @@ export default function DemoDashboard() {
           viewport={{ once: true }}
           className="mb-16 text-center"
         >
-          <span className="mb-4 inline-block rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary">
-            Interactive Demo
+          <span className="mb-4 inline-block rounded-full border border-primary/20 bg-primary/5 px-5 py-2 text-lg font-medium text-primary">
+            The Savings Simulator
           </span>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             See Your Impact in Real-Time

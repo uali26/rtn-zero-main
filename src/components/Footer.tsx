@@ -16,9 +16,19 @@ function LinkedinIcon({ className }: { className?: string }) {
   );
 }
 
-const footerLinks = {
-  Product: ["Features", "Integrations"],
-  Company: ["Press"],
+const footerLinks: Record<string, { label: string; href: string }[]> = {
+  Product: [
+    { label: "How It Works", href: "#how-it-works" },
+    { label: "Benefits", href: "#benefits" },
+    { label: "Ecosystem", href: "#ecosystem" },
+    { label: "Integrations", href: "#integrations" },
+  ],
+  Company: [
+    { label: "Intelligence", href: "#intelligence" },
+    { label: "Industry Hub", href: "#industry-hub" },
+    { label: "Roadmap", href: "#roadmap" },
+    { label: "Dashboard", href: "#dashboard" },
+  ],
 };
 
 export default function Footer() {
@@ -55,12 +65,12 @@ export default function Footer() {
               <h4 className="mb-4 text-sm font-semibold">{title}</h4>
               <ul className="space-y-2.5">
                 {links.map((link) => (
-                  <li key={link}>
+                  <li key={link.label}>
                     <a
-                      href={`#${link.toLowerCase().replace(/\s+/g, "-")}`}
+                      href={link.href}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      {link}
+                      {link.label}
                     </a>
                   </li>
                 ))}

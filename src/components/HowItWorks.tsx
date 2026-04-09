@@ -45,7 +45,7 @@ export default function HowItWorks() {
           viewport={{ once: true }}
           className="mb-16 text-center"
         >
-          <span className="mb-4 inline-block rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary">
+          <span className="mb-4 inline-block rounded-full border border-primary/20 bg-primary/5 px-5 py-2 text-lg font-medium text-primary">
             How It Works
           </span>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">

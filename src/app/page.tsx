@@ -17,14 +17,14 @@ export default function Home() {
       <Navbar />
       <main className="flex-1">
         <Hero />
-        <HowItWorks />
-        <Benefits />
         <FeatureGrid />
         <EnvironmentalIntelligence />
+        <Benefits />
         <Integrations />
         <IndustryHub />
         <Roadmap />
         <DemoDashboard />
+        <HowItWorks />
         <BookAChat />
       </main>
       <Footer />

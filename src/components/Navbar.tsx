@@ -7,12 +7,16 @@ import { Button } from "@/components/ui/button";
 import ThemeToggle from "./ThemeToggle";
 
 const navLinks = [
+
   { label: "Ecosystem", href: "#ecosystem" },
   { label: "Intelligence", href: "#intelligence" },
+  { label: "Benefits", href: "#benefits" },
+  { label: "Integrations", href: "#integrations" },
   { label: "Industry Hub", href: "#industry-hub" },
   { label: "Roadmap", href: "#roadmap" },
-  { label: "Dashboard", href: "#dashboard" },
-  { label: "Book a Chat", href: "#book-a-chat" },
+  { label: "Savings Simulator", href: "#simulator" },
+    { label: "How It Works", href: "#how-it-works" },
+
 ];
 
 export default function Navbar() {
