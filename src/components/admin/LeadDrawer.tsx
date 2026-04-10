@@ -20,9 +20,9 @@ import { STATUS_LABELS, STATUS_COLORS } from "@/lib/types/lead";
 /* ── Status Stepper ──────────────────────────────────────────────────── */
 
 const STEPPER_STAGES: { key: LeadStatus; label: string }[] = [
-  { key: "NEW", label: "New" },
-  { key: "CONTACTED", label: "Contacted" },
-  { key: "DEMO", label: "Demo" },
+  { key: "CONTACT_FORM", label: "Contact Form" },
+  { key: "MEETING_SCHEDULED", label: "Meeting Scheduled" },
+  { key: "DECISION", label: "Decision" },
   { key: "CONVERTED", label: "Converted" },
 ];
 

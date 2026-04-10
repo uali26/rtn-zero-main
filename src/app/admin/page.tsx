@@ -24,11 +24,8 @@ import type { LeadWithNotes, LeadStatus } from "@/lib/types/lead";
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: "ALL", label: "All Statuses" },
-  { value: "NEW", label: "New" },
   { value: "CONTACT_FORM", label: "Contact Form" },
-  { value: "CONTACTED", label: "Contacted" },
   { value: "MEETING_SCHEDULED", label: "Meeting Scheduled" },
-  { value: "DEMO", label: "Demo" },
   { value: "DECISION", label: "Decision" },
   { value: "CONVERTED", label: "Converted" },
   { value: "LOST", label: "Lost" },

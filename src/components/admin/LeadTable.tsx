@@ -47,11 +47,8 @@ interface LeadTableProps {
 }
 
 const ALL_STATUSES: LeadStatus[] = [
-  "NEW",
   "CONTACT_FORM",
-  "CONTACTED",
   "MEETING_SCHEDULED",
-  "DEMO",
   "DECISION",
   "CONVERTED",
   "LOST",
