@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, RefreshCw, Users } from "lucide-react";
+import { Search, RefreshCw, Users, CalendarDays, X } from "lucide-react";
+import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,9 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { LeadTable } from "@/components/admin/LeadTable";
-import { LeadSheet } from "@/components/admin/LeadSheet";
+import { LeadDrawer } from "@/components/admin/LeadDrawer";
 import type { LeadWithNotes, LeadStatus } from "@/lib/types/lead";
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
@@ -33,10 +40,12 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedLead, setSelectedLead] = useState<LeadWithNotes | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -44,6 +53,8 @@ export default function AdminDashboard() {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (statusFilter !== "ALL") params.set("status", statusFilter);
+      if (dateFrom) params.set("from", dateFrom.toISOString());
+      if (dateTo) params.set("to", dateTo.toISOString());
       params.set("page", String(page));
       params.set("limit", "25");
 
@@ -58,31 +69,39 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, page]);
+  }, [search, statusFilter, dateFrom, dateTo, page]);
 
   useEffect(() => {
     fetchLeads();
   }, [fetchLeads]);
 
   const handleStatusChange = async (leadId: string, status: LeadStatus) => {
+    // Optimistic update
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, status } : l))
+    );
+    if (selectedLead?.id === leadId) {
+      setSelectedLead((prev) => (prev ? { ...prev, status } : prev));
+    }
     try {
       const res = await fetch(`/api/admin/leads/${leadId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error("Failed to update status");
-      setLeads((prev) =>
-        prev.map((l) => (l.id === leadId ? { ...l, status } : l))
-      );
+      if (!res.ok) {
+        // Revert on failure
+        fetchLeads();
+        throw new Error("Failed to update status");
+      }
     } catch (err) {
       console.error("Status update failed:", err);
     }
   };
 
-  const handleOpenSheet = (lead: LeadWithNotes) => {
+  const handleOpenDrawer = (lead: LeadWithNotes) => {
     setSelectedLead(lead);
-    setSheetOpen(true);
+    setDrawerOpen(true);
   };
 
   const handleNoteSaved = (leadId: string, notes: LeadWithNotes["notes"]) => {
@@ -94,20 +113,26 @@ export default function AdminDashboard() {
     }
   };
 
+  const clearDateFilter = () => {
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setPage(1);
+  };
+
   return (
     <>
       {/* Page Title Bar */}
       <div className="border-b border-border/40">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight">
+              <h1 className="text-xl font-bold tracking-tight">
                 Lead Management
               </h1>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {total} lead{total !== 1 ? "s" : ""} total
               </p>
             </div>
@@ -120,7 +145,7 @@ export default function AdminDashboard() {
             className="gap-2"
           >
             <RefreshCw
-              className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
+              className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
             />
             Refresh
           </Button>
@@ -139,7 +164,7 @@ export default function AdminDashboard() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="pl-9"
+              className="h-10 pl-10 text-sm"
             />
           </div>
           <Select
@@ -149,7 +174,7 @@ export default function AdminDashboard() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectTrigger className="h-10 w-full text-sm sm:w-48">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -160,6 +185,55 @@ export default function AdminDashboard() {
               ))}
             </SelectContent>
           </Select>
+
+          {/* Date Range Filter */}
+          <div className="flex items-center gap-1.5">
+            <Popover>
+              <PopoverTrigger
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-normal hover:bg-muted"
+              >
+                <CalendarDays className="h-4 w-4" />
+                {dateFrom
+                  ? format(dateFrom, "dd MMM")
+                  : "From"}
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={(d) => { setDateFrom(d ?? undefined); setPage(1); }}
+                />
+              </PopoverContent>
+            </Popover>
+            <span className="text-muted-foreground">–</span>
+            <Popover>
+              <PopoverTrigger
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-normal hover:bg-muted"
+              >
+                <CalendarDays className="h-4 w-4" />
+                {dateTo
+                  ? format(dateTo, "dd MMM")
+                  : "To"}
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={(d) => { setDateTo(d ?? undefined); setPage(1); }}
+                />
+              </PopoverContent>
+            </Popover>
+            {(dateFrom || dateTo) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearDateFilter}
+                className="h-10 px-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -169,7 +243,7 @@ export default function AdminDashboard() {
           leads={leads}
           loading={loading}
           onStatusChange={handleStatusChange}
-          onEdit={handleOpenSheet}
+          onManageLead={handleOpenDrawer}
         />
 
         {/* Pagination */}
@@ -200,12 +274,13 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* Lead Detail Sheet */}
-      <LeadSheet
+      {/* Lead Drawer */}
+      <LeadDrawer
         lead={selectedLead}
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
         onNoteSaved={handleNoteSaved}
+        onStatusChange={handleStatusChange}
       />
     </>
   );
