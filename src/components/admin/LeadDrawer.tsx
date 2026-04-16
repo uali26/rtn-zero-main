@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Trash2, Loader2, Check } from "lucide-react";
+import { Send, Trash2, Loader2, Check, Link2, Copy } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import type { LeadWithNotes, LeadNote, LeadStatus } from "@/lib/types/lead";
@@ -103,8 +104,40 @@ export function LeadDrawer({
   const [noteText, setNoteText] = useState("");
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (!lead) return null;
+
+  const handleGenerateInvite = async () => {
+    setGeneratingInvite(true);
+    setCopied(false);
+    try {
+      const res = await fetch(`/api/admin/leads/${lead.id}/invite`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to generate invite");
+      const data = (await res.json()) as { inviteUrl?: string };
+      setInviteUrl(data.inviteUrl ?? null);
+    } catch (err) {
+      console.error("Invite generation failed:", err);
+      setInviteUrl(null);
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
+
+  const handleCopyInvite = async () => {
+    if (!inviteUrl) return;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
+  };
 
   const handleAddNote = async () => {
     if (!noteText.trim()) return;
@@ -172,6 +205,52 @@ export function LeadDrawer({
 
         {/* ── Body: Lead info + Activity Timeline ────────────────────── */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+          {/* Invite Link */}
+          <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Link2 className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Onboarding invite</p>
+                  <p className="text-xs text-muted-foreground">
+                    Generate a one-time setup link for this lead.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleGenerateInvite}
+                disabled={generatingInvite}
+                className="gap-1.5"
+              >
+                {generatingInvite ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Link2 className="h-3.5 w-3.5" />
+                )}
+                Generate
+              </Button>
+            </div>
+
+            {inviteUrl && (
+              <div className="mt-3 flex gap-2">
+                <Input readOnly value={inviteUrl} className="h-9 text-xs" />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleCopyInvite}
+                  className="h-9 gap-1.5"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {copied ? "Copied" : "Copy"}
+                </Button>
+              </div>
+            )}
+          </div>
+
           {/* Quick Info */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
             <div>

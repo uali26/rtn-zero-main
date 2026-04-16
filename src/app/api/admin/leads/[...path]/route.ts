@@ -49,10 +49,12 @@ export async function POST(
   if (unauthorized) return unauthorized;
 
   const { path } = await params;
-  const body = await req.json();
+  const contentLength = req.headers.get("content-length");
+  const hasBody = contentLength !== null && Number(contentLength) > 0;
+  const body = hasBody ? await req.json() : undefined;
   const res = await backendFetch(`/api/v1/leads/${path.join("/")}`, {
     method: "POST",
-    body: JSON.stringify(body),
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
